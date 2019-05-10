@@ -1,5 +1,6 @@
 package Wrappers;
 
+import java.util.List;
 import java.util.Map;
 
 import Discord.Constants;
@@ -58,16 +59,16 @@ public class EmbedWrapper {
 		return CreateFirstPollMessage(author, guild, content, type, author.getDisplayName(guild)+Constants.POLL_ADDITION);
 	}
 	
-	public EmbedObject createNewPollEmbedFromPrevious(Map<Long,IUser> usersYes, Map<Long,IUser> usersNo, IGuild guild) {
+	public EmbedObject createNewPollEmbedFromPrevious(List<Long> usersYes, List<Long> usersNo, IGuild guild) {
 	    
 	    // Build strings for voters
 	    String peopleYes = "";
 	    String peopleNo = "";
 	    
-	    for(Map.Entry<Long, IUser> u:usersYes.entrySet())
-	    	peopleYes = peopleYes + u.getValue().getDisplayName(guild) + "\n";
-	    for(Map.Entry<Long, IUser> u:usersNo.entrySet())
-	    	peopleNo = peopleNo + u.getValue().getDisplayName(guild) + "\n";
+	    for(Long l : usersYes)
+	    	peopleYes = peopleYes + "<@" + String.valueOf(l) + ">\n";
+	    for(Long l : usersNo)
+	    	peopleNo = peopleNo + "<@" + String.valueOf(l) + ">\n";
 	    
 	    if(usersYes.isEmpty()) peopleYes = "-----";
 	    if(usersNo.isEmpty()) peopleNo = "-----";
@@ -89,4 +90,6 @@ public class EmbedWrapper {
 	    
 	    return builder.build();
 	}
+	
+	//public String returnEmbedContent()
 }

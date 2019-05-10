@@ -6,6 +6,7 @@ import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.impl.obj.ReactionEmoji;
 import sx.blah.discord.handle.impl.obj.Webhook;
 import sx.blah.discord.handle.obj.IChannel;
+import sx.blah.discord.handle.obj.IEmbed;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IReaction;
 import sx.blah.discord.handle.obj.IUser;
@@ -59,6 +60,13 @@ public class ServerInteractions {
 		RequestBuffer.request(() -> {
 			message.edit(embed);
 		});
+	}
+	
+	public static IEmbed getEmbedInMessage(IMessage message, int embedID) {
+		IEmbed result = RequestBuffer.request(() -> {
+			return message.getEmbeds().get(embedID);
+		}).get();
+		return result;
 	}
 	
 	public static boolean addReactionToMessage(IMessage message, ReactionEmoji reaction) {

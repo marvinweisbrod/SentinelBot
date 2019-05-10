@@ -1,8 +1,12 @@
 package Discord.API;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.mysql.fabric.xmlrpc.base.Array;
 
 import Discord.Constants;
 import Discord.DataManager;
@@ -68,7 +72,7 @@ public class ReactionProcessor {
 		// get all voters for both reactions (custom reactions, Id stored in Constants)
 	    IReaction reactionCheck = message.getReactionByUnicode(Constants.REACTION_CHECK);
 	    IReaction reactionX = message.getReactionByUnicode(Constants.REACTION_X);
-	    
+	    	    
 	    //Check whether there are no voters. returns sometimes null
 	    if(reactionCheck == null || reactionX == null) {
 	    	String s = "";
@@ -78,21 +82,52 @@ public class ReactionProcessor {
 	    	return;
 	    }
 	    
-	    Map<Long,IUser> usersYes = new LinkedHashMap<Long,IUser>();
-	    Map<Long,IUser> usersNo = new LinkedHashMap<Long,IUser>();
+	    List<Long> usersYes = new ArrayList<Long>();
+	    List<Long> usersNo = new ArrayList<Long>();
+	    List<Long> newUsersYes = new ArrayList<Long>();
+	    List<Long> newUsersNo = new ArrayList<Long>();
 	    
 	    //put the users in a map if they are not bots. 
 	    //could be done another way but it remained after some experiments.
 	    for(IUser u:reactionX.getUsers()) {
 	    	if(!u.isBot())
-	    		usersNo.put(u.getLongID(), u);
+	    		usersNo.add(u.getLongID());
 		}
 	    for(IUser u:reactionCheck.getUsers()) {
-	    	if(!u.isBot() && !usersNo.containsKey(u.getLongID()))
-	    		usersYes.put(u.getLongID(), u);
+	    	if(!u.isBot() && !usersNo.contains(u.getLongID()))
+	    		usersYes.add(u.getLongID());
 		}
+	    // Get old embed
+	    IEmbed previousEmbed = ServerInteractions.getEmbedInMessage(message, 0);
+	    List<String> previousYes = new ArrayList<String>(Arrays.asList(previousEmbed.getEmbedFields().get(0).getValue().replaceAll("[@<>]", "").split("\n")));
+	    List<String> previousNo = new ArrayList<String>(Arrays.asList(previousEmbed.getEmbedFields().get(1).getValue().replaceAll("[@<>]", "").split("\n")));
 	    
-	    EmbedObject newEmbed = embed.createNewPollEmbedFromPrevious(usersYes, usersNo, message.getGuild());
+	    // Keep users if still in reactions list
+	    if (!previousEmbed.getEmbedFields().get(0).getValue().contains("-")) {
+	    	for (String s : previousYes) {
+	    		if (usersYes.contains(Long.valueOf(s))) {
+	    			newUsersYes.add(Long.valueOf(s));
+	    			usersYes.remove(new Long(Long.valueOf(s)));
+	    		}
+	    	}
+	    }
+	    if (!previousEmbed.getEmbedFields().get(1).getValue().contains("-")) {
+	    	for (String s : previousNo) {
+	    		if (usersNo.contains(Long.valueOf(s))) {
+	    			newUsersNo.add(Long.valueOf(s));
+	    			usersNo.remove(new Long(Long.valueOf(s)));
+	    		}
+	    	}
+	    }
+	    // Add new users at the end
+	    if (!usersYes.isEmpty()) {
+	    	newUsersYes.addAll(usersYes);
+	    }
+	    if (!usersNo.isEmpty()) {
+	    	newUsersNo.addAll(usersNo);
+	    }
+	    
+	    EmbedObject newEmbed = embed.createNewPollEmbedFromPrevious(newUsersYes, newUsersNo, message.getGuild());
 	    
 	    ServerInteractions.editEmbedInMessage(message, newEmbed);
 	}
